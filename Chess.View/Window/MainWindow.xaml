@@ -37,6 +37,7 @@
                         <icon:UndoIcon />
                     </MenuItem.Icon>
                 </MenuItem>
+                <MenuItem Header="960" Command="{Binding NineSixtyCommand}"></MenuItem>
                 <Separator />
                 <MenuItem Header="Exit" Click="ExitClick">
                     <MenuItem.Icon>
@@ -225,5 +226,6 @@
                 </Canvas>
             </Border>
         </Viewbox>
+        
     </DockPanel>
 </Window>

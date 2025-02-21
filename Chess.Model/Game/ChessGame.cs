@@ -66,6 +66,8 @@ namespace Chess.Model.Game
             this.LastUpdate = lastUpdate;
         }
 
+
+
         /// <summary>
         /// Gets the history of updates that led to this game state.
         /// </summary>

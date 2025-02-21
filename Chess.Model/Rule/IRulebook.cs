@@ -21,6 +21,8 @@ namespace Chess.Model.Rule
         /// <returns>The newly created chess game.</returns>
         ChessGame CreateGame();
 
+        ChessGame CreateGame960();
+
         /// <summary>
         /// Gets the status of a chess game, according to the rulebook.
         /// </summary>

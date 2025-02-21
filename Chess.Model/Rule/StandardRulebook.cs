@@ -11,6 +11,7 @@ namespace Chess.Model.Rule
     using Chess.Model.Game;
     using Chess.Model.Piece;
     using Chess.Model.Visitor;
+    using System;
     using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.Linq;
@@ -90,6 +91,125 @@ namespace Chess.Model.Rule
 
             return new ChessGame(board, whitePlayer, blackPlayer);
         }
+
+        //PRO250 chess960 stuff
+
+
+        //variables for use in unit testing. they are public, which is not good standards, but it is what it is.
+        public int[] TakenSpots = null;
+        public int kingInt = -1;
+        public int rook1Int = -1;
+        public int rook2Int = -1;
+        public int bishopOdd = -1;
+        public int bishopEven = -1;
+        public int queenInt = -1;
+        public int knight1Int = -1;
+        public int knight2Int = -1;
+
+
+
+        /// <summary>
+        /// Creates the placements for all the pieces.
+        /// Used in CreateGame960() to create a chess960 game.
+        /// returns an int[].
+        /// spots taken does not refer to which piece is occupying which column, only which column is occupied.
+        /// </summary>
+        /// <returns>The spots that are taken in row form</returns>
+        public int[] nineSixty_initializePlacements()
+        {
+            int[] takenSpots = new int[8];
+            for (int i = 0; i < 8; i++)
+            {
+                takenSpots[i] = -1;
+            }
+            kingInt = new Random().Next(1, 7);
+            takenSpots[kingInt] = 1;
+
+            rook1Int = new Random().Next(0, kingInt);
+            takenSpots[rook1Int] = 1;
+
+            rook2Int = new Random().Next(kingInt + 1, 8);
+            takenSpots[rook2Int] = 1;
+
+            bishopOdd = new Random().Next(0, 8);
+            bishopEven = new Random().Next(0, 8);
+            while (bishopEven % 2 != 0 || takenSpots[bishopEven] != -1)
+            {
+                bishopEven = new Random().Next(0, 8);
+            }
+            takenSpots[bishopEven] = 1;
+            while (bishopOdd % 2 == 0 || takenSpots[bishopOdd] != -1)
+            {
+                bishopOdd = new Random().Next(0, 8);
+            }
+            takenSpots[bishopOdd] = 1;
+
+            queenInt = new Random().Next(0, 8);
+            while (takenSpots[queenInt] != -1)
+            {
+                queenInt = new Random().Next(0, 8);
+            }
+            takenSpots[queenInt] = 1;
+
+            knight1Int = new Random().Next(0, 8);
+            while (takenSpots[knight1Int] != -1)
+            {
+                knight1Int = new Random().Next(0, 8);
+            }
+            takenSpots[knight1Int] = 1;
+
+            knight2Int = new Random().Next(0, 8);
+            while (takenSpots[knight2Int] != -1)
+            {
+                knight2Int = new Random().Next(0, 8);
+            }
+            takenSpots[knight2Int] = 1;
+
+            TakenSpots = takenSpots;
+
+            return TakenSpots;
+        }
+
+        public ChessGame CreateGame960()
+        {
+            nineSixty_initializePlacements();
+
+            IEnumerable<PlacedPiece> makeBaseLine(int row, Color color)
+            {
+                yield return new PlacedPiece(new Position(row, kingInt), new King(color));
+                yield return new PlacedPiece(new Position(row, rook1Int), new Rook(color));
+                yield return new PlacedPiece(new Position(row, rook2Int), new Rook(color));
+                yield return new PlacedPiece(new Position(row, bishopEven), new Bishop(color));
+                yield return new PlacedPiece(new Position(row, bishopOdd), new Bishop(color));
+                yield return new PlacedPiece(new Position(row, queenInt), new Queen(color));
+                yield return new PlacedPiece(new Position(row, knight1Int), new Knight(color));
+                yield return new PlacedPiece(new Position(row, knight2Int), new Knight(color));
+            }
+
+            IEnumerable<PlacedPiece> makePawns(int row, Color color) =>
+                Enumerable.Range(0, 8).Select(
+                    i => new PlacedPiece(new Position(row, i), new Pawn(color))
+                );
+
+            IImmutableDictionary<Position, ChessPiece> makePieces(int pawnRow, int baseRow, Color color)
+            {
+                var pawns = makePawns(pawnRow, color);
+                var baseLine = makeBaseLine(baseRow, color);
+                var pieces = baseLine.Union(pawns);
+                var empty = ImmutableSortedDictionary.Create<Position, ChessPiece>(PositionComparer.DefaultComparer);
+                return pieces.Aggregate(empty, (s, p) => s.Add(p.Position, p.Piece));
+            }
+
+            var whitePlayer = new Player(Color.White);
+            var whitePieces = makePieces(1, 0, Color.White);
+            var blackPlayer = new Player(Color.Black);
+            var blackPieces = makePieces(6, 7, Color.Black);
+            var board = new Board(whitePieces.AddRange(blackPieces));
+
+            return new ChessGame(board, whitePlayer, blackPlayer);
+        }
+
+        //
 
         /// <summary>
         /// Gets the status of a chess game, according to the standard rulebook.
